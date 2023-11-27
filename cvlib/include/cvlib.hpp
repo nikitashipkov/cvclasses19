@@ -42,6 +42,13 @@ class motion_segmentation : public cv::BackgroundSubtractor
 
     private:
     cv::Mat bg_model_;
+    
+    int _threshold;
+    
+
+    std::deque<cv::Mat> _frameBuffer;
+
+
 };
 
 /// \brief FAST corner detection algorithm
