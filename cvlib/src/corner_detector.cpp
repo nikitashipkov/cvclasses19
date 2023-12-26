@@ -114,24 +114,59 @@ void corner_detector_fast::detect(cv::InputArray image, CV_OUT std::vector<cv::K
     // \todo implement FAST with minimal LOCs(lines of code), but keep code readable.
 }
 
-void corner_detector_fast::compute(cv::InputArray, std::vector<cv::KeyPoint>& keypoints, cv::OutputArray descriptors)
+void corner_detector_fast::compute(cv::InputArray inputArr, std::vector<cv::KeyPoint>& keypoints, cv::OutputArray descriptors)
 {
-    std::srand(unsigned(std::time(0))); // \todo remove me
-    // \todo implement any binary descriptor
-    const int desc_length = 2;
+    
+    cv::Mat image = inputArr.getMat().clone();
+    cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
+
+    const int window = 10;
+    const int desc_length = 128;
     descriptors.create(static_cast<int>(keypoints.size()), desc_length, CV_32S);
     auto desc_mat = descriptors.getMat();
     desc_mat.setTo(0);
 
-    int* ptr = reinterpret_cast<int*>(desc_mat.ptr());
-    for (const auto& pt : keypoints)
+    
+    cv::RNG generator(cv::getCPUTickCount());
+   // std::vector<std::pair<cv::Point2f, cv::Point2f>> offsets(desc_length);\
+
+    if (_offsets.empty())
     {
-        for (int i = 0; i < desc_length; ++i)
+        _offsets.resize(desc_length);
+        for (int i = 0; i < _offsets.size(); i++)
         {
-            *ptr = std::rand();
+            std::pair<cv::Point2f, cv::Point2f> ptPair;
+            ptPair.first = cv::Point2f(generator.uniform(-window / 2, window / 2), generator.uniform(-window / 2, window / 2));
+            ptPair.second = cv::Point2f(generator.uniform(-window / 2, window / 2), generator.uniform(-window / 2, window / 2));
+            _offsets[i] = ptPair;
+        }
+    }
+    
+    
+
+    cv::copyMakeBorder(image, image, window / 2, window / 2, window / 2, window / 2, cv::BORDER_REPLICATE);
+
+    int* ptr = reinterpret_cast<int*>(desc_mat.ptr());
+
+    const int bitSize = sizeof(int) * 8;
+
+     for (const auto& pt : keypoints)
+    {
+        for (int i = 0; i < desc_length / bitSize; ++i)
+        {
+            *ptr = 0;
+            for (int j = 0; j < bitSize; j++)
+            {
+                uint8_t first_pix = image.at<uint8_t>(pt.pt + _offsets[i * bitSize + j].first + cv::Point2f(window / 2, window / 2));
+                uint8_t second_pix = image.at<uint8_t>(pt.pt + _offsets[i * bitSize + j].second + cv::Point2f(window / 2, window / 2));
+                *ptr |= (first_pix < second_pix) << (bitSize - 1 - j);
+            }
+            
             ++ptr;
         }
     }
+
+
 }
 
 void corner_detector_fast::detectAndCompute(cv::InputArray image, cv::InputArray mask, std::vector<cv::KeyPoint>& keypoints, cv::OutputArray descriptors, bool /*= false*/)
