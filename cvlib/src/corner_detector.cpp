@@ -126,17 +126,22 @@ void corner_detector_fast::compute(cv::InputArray inputArr, std::vector<cv::KeyP
     auto desc_mat = descriptors.getMat();
     desc_mat.setTo(0);
 
-
+    
     cv::RNG generator(cv::getCPUTickCount());
-    std::vector<std::pair<cv::Point2f, cv::Point2f>> offsets(desc_length);
+   // std::vector<std::pair<cv::Point2f, cv::Point2f>> offsets(desc_length);\
 
-    for (int i = 0; i < offsets.size(); i++)
+    if (_offsets.empty())
     {
-        std::pair<cv::Point2f, cv::Point2f> ptPair;
-        ptPair.first = cv::Point2f(generator.uniform(-window / 2, window / 2), generator.uniform(-window / 2, window / 2));
-        ptPair.second = cv::Point2f(generator.uniform(-window / 2, window / 2), generator.uniform(-window / 2, window / 2));
-        offsets[i] = ptPair;
+        _offsets.resize(desc_length);
+        for (int i = 0; i < _offsets.size(); i++)
+        {
+            std::pair<cv::Point2f, cv::Point2f> ptPair;
+            ptPair.first = cv::Point2f(generator.uniform(-window / 2, window / 2), generator.uniform(-window / 2, window / 2));
+            ptPair.second = cv::Point2f(generator.uniform(-window / 2, window / 2), generator.uniform(-window / 2, window / 2));
+            _offsets[i] = ptPair;
+        }
     }
+    
     
 
     cv::copyMakeBorder(image, image, window / 2, window / 2, window / 2, window / 2, cv::BORDER_REPLICATE);
@@ -152,8 +157,8 @@ void corner_detector_fast::compute(cv::InputArray inputArr, std::vector<cv::KeyP
             *ptr = 0;
             for (int j = 0; j < bitSize; j++)
             {
-                uint8_t first_pix = image.at<uint8_t>(pt.pt + offsets[i * bitSize + j].first + cv::Point2f(window / 2, window / 2));
-                uint8_t second_pix = image.at<uint8_t>(pt.pt + offsets[i * bitSize + j].second + cv::Point2f(window / 2, window / 2));
+                uint8_t first_pix = image.at<uint8_t>(pt.pt + _offsets[i * bitSize + j].first + cv::Point2f(window / 2, window / 2));
+                uint8_t second_pix = image.at<uint8_t>(pt.pt + _offsets[i * bitSize + j].second + cv::Point2f(window / 2, window / 2));
                 *ptr |= (first_pix < second_pix) << (bitSize - 1 - j);
             }
             
