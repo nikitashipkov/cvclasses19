@@ -25,7 +25,7 @@ void corner_detector_fast::detect(cv::InputArray image, CV_OUT std::vector<cv::K
     int N = 11;
     auto _image = image.getMat().clone();
     
-    cv::cvtColor(_image, _image, cv::COLOR_BGR2GRAY);
+    //cv::cvtColor(_image, _image, cv::COLOR_BGR2GRAY);
     cv::copyMakeBorder(_image, _image, 3, 3, 3, 3, cv::BORDER_REPLICATE);
 
     std::vector<cv::Point> circle(16);
@@ -118,7 +118,7 @@ void corner_detector_fast::compute(cv::InputArray inputArr, std::vector<cv::KeyP
 {
     
     cv::Mat image = inputArr.getMat().clone();
-    cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
+    //cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
 
     const int window = 10;
     const int desc_length = 128;
